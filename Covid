@@ -1,0 +1,140 @@
+
+		-- Countries with Highest Death Count per Population
+		
+		
+		Select Location, MAX(Total_deaths) as TotalDeathCount
+		From PortfolioProject..CovidDeaths
+		--Where location like '%states%'
+		Where continent is not null 
+    Group by location
+  	order by TotalDeathCount desc
+
+
+------------------------------------------------------------------------------------------------------------
+
+		
+-- Showing contintents with the highest death count per population
+		
+
+		Select continent, MAX(Total_deaths) as TotalDeathCount
+		From PortfolioProject..CovidDeaths
+		--Where location like '%states%'
+		Where continent is not null 
+    Group by continent
+  	order by TotalDeathCount desc
+		
+------------------------------------------------------------------------------------------------------------
+		
+-- GLOBAL NUMBERS
+		
+
+		
+		Select SUM(new_cases) as total_cases, SUM(new_deaths) as total_deaths, SUM(new_deaths)/SUM(New_Cases)*100 as DeathPercentage
+		From PortfolioProject..CovidDeaths
+		--Where location like '%states%'
+		where continent is not null 
+	  order by 1,2
+
+
+------------------------------------------------------------------------------------------------------------
+
+		-- Shows Percentage of Population that has recieved at least one Covid Vaccine
+
+
+		
+  Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
+, SUM(vac.new_vaccinations) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+--, (RollingPeopleVaccinated/population)*100
+From PortfolioProject..CovidDeaths dea
+Join PortfolioProject..CovidVaccinations vac
+	On dea.location = vac.location
+	and dea.date = vac.date
+where dea.continent is not null 
+
+order by 2,3
+	
+	
+
+	
+	------------------------------------------------------------------------------------------------------------
+		
+
+
+
+		--Using CTE to perform Calculation to perform MortalityRate (New deaths vs Population)
+
+
+		WITH table0 as
+		(Select dea.continent, dea.location, dea.population, vac.new_vaccinations, dea.new_cases,dea.new_deaths, dea.total_deaths,
+		(dea.new_deaths/dea.population)*100 as MortalityRate
+		from PortfolioProject..CovidDeaths dea
+		
+
+		Join PortfolioProject..CovidVaccinations vac
+		
+
+		On dea.location = vac.location
+		)
+		Select * from table0
+		where MortalityRate > 0
+		order by location
+		
+
+		
+		
+------------------------------------------------------------------------------------------------------------
+				
+
+		
+
+		-- Using Temp Table to perform Calculation on Partition By in previous query
+
+
+
+DROP Table if exists #PercentPopulationVaccinated
+Create Table #PercentPopulationVaccinated
+(
+Continent nvarchar(255),
+Location nvarchar(255),
+Date datetime,
+Population numeric,
+New_vaccinations numeric,
+RollingPeopleVaccinated numeric
+)
+
+Insert into #PercentPopulationVaccinated
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
+, SUM(vac.new_vaccinations) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+--, (RollingPeopleVaccinated/population)*100
+From PortfolioProject..CovidDeaths dea
+Join PortfolioProject..CovidVaccinations vac
+	On dea.location = vac.location
+	and dea.date = vac.date
+--where dea.continent is not null 
+--order by 2,3
+
+Select *, (RollingPeopleVaccinated/Population)*100
+From #PercentPopulationVaccinated
+		
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+Creating View to store data for later visualisation
+
+
+Create View PercentPopulationVaccinated as
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations
+, SUM(vac.new_vaccinations) OVER (Partition by dea.Location Order by dea.location, dea.Date) as RollingPeopleVaccinated
+--, (RollingPeopleVaccinated/population)*100
+From PortfolioProject..CovidDeaths dea
+Join PortfolioProject..CovidVaccinations vac
+	On dea.location = vac.location
+	and dea.date = vac.date
+where dea.continent is not null
+	
+
+	
+	------------------------------------------------------------------------------------------------------------
+
