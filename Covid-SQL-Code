@@ -121,7 +121,7 @@ From #PercentPopulationVaccinated
 ------------------------------------------------------------------------------------------------------------
 
 
-Creating View to store data for later visualisation
+--Creating View to store data for later visualisation
 
 
 Create View PercentPopulationVaccinated as
